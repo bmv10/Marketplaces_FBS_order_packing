@@ -63,7 +63,7 @@ def get_orders_to_shipment(shop, campaignId, warehouse_id):
     make_assembly_list(shop, assembly_sheet)
 
     # get act for shipment
-    r = requests.get(url=f"{url}/shipments/reception-transfer-act", headers=headers, params={"warehouse_id":int(warehouse_id)})
+    r = requests.get(url=f"{url}/shipments/reception-transfer-act", headers=headers, params={"warehouse_id": int(warehouse_id)})
     with open(f"{datetime.datetime.now().strftime('%Y.%m.%d')} YM {shop} Act.pdf", "wb") as f:
         f.write(r.content)
 
@@ -80,6 +80,7 @@ def get_orders_to_shipment(shop, campaignId, warehouse_id):
 
 def make_assembly_list(shop, assembly_sheet):
     assembly_sheet = [["Order number", "Order status", "SKU", "Quantity"]]+assembly_sheet
+
     class PDF(FPDF):
         def header(self):
             # Arial bold 15
@@ -113,7 +114,5 @@ def main():
         get_orders_to_shipment(shop, campaignId, warehouse_id)
 
 
-if __name__=="__main__":
+if __name__ == "__main__":
     main()
-
-

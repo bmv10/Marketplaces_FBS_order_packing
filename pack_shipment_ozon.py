@@ -8,6 +8,7 @@ from dotenv import load_dotenv
 load_dotenv()
 tokens = eval(os.getenv("OZON_TOKENS"))
 
+
 def get_orders_to_shipment(clientID, token, status):
     url = "https://api-seller.ozon.ru/v3/posting/fbs/unfulfilled/list"
     date_ship = datetime.datetime.now().strftime("%Y-%m-%d")
@@ -42,7 +43,8 @@ def get_orders_to_shipment(clientID, token, status):
             if status == "awaiting_packaging":
                 set_awaiting_deliver_for_order(i, clientID, token)
             else:
-                assemble_list.append([i.get("posting_number"), i.get("status"), i.get("products")[0].get("offer_id"), i.get("products")[0].get("quantity")])
+                assemble_list.append([i.get("posting_number"), i.get("status"), i.get("products")[0].get("offer_id"),
+                                      i.get("products")[0].get("quantity")])
                 posting_numbers.append(i.get("posting_number"))
                 delivery_method.append(i.get("delivery_method").get("id"))
     print(posting_numbers, delivery_method)
@@ -134,9 +136,10 @@ def get_package_act(taskID_act, shop, clientID, token):
     with open(f'{datetime.datetime.now().strftime("%Y.%m.%d")} OZON {shop} Act.pdf', 'wb') as f:
         f.write(load)
 
+
 def make_assemble_list(shop, assembly_sheet):
     if assembly_sheet:
-        assembly_sheet = [["Posting number", "Order status", "SKU", "Quantity"]]+assembly_sheet
+        assembly_sheet = [["Posting number", "Order status", "SKU", "Quantity"]] + assembly_sheet
 
         class PDF(FPDF):
             def header(self):
@@ -167,6 +170,7 @@ def make_assemble_list(shop, assembly_sheet):
             pdf.ln()
         pdf.output(f"{datetime.datetime.now().strftime('%Y.%m.%d')} Ozon {shop} assemble list.pdf")
 
+
 def main():
     for shop, clientID, token in tokens:
         get_orders_to_shipment(clientID, token, "awaiting_packaging")
@@ -184,4 +188,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
