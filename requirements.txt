@@ -1,0 +1,5 @@
+python-dotenv~=1.0.0
+requests~=2.25.1
+img2pdf==0.4.4
+fpdf==1.7.2
+pypdf==3.12.0
