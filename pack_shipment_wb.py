@@ -9,6 +9,7 @@ from dotenv import load_dotenv
 load_dotenv()
 tokens = eval(os.getenv("WB_TOKENS"))
 
+
 def get_new_orders_to_pack_wb(token):
     host = "https://suppliers-api.wildberries.ru/api/v3/orders/new"
     headers = {"Authorization": token}
