@@ -161,14 +161,12 @@ def make_assemble_list(shop, assembly_sheet):
         pdf.add_page()
         pdf.set_font("Arial", "", size=12)
         for order_number, order_status, sku, quantity in assembly_sheet:
-            # for item in row:
-            #     pdf.cell(45, 10, txt=str(item), border=1)
-            pdf.cell(30, 10, str(order_number), 1)
+            pdf.cell(50, 10, str(order_number), 1)
             pdf.cell(50, 10, str(order_status), 1)
-            pdf.cell(90, 10, str(sku), 1)
+            pdf.cell(70, 10, str(sku), 1)
             pdf.cell(20, 10, str(quantity), 1)
             pdf.ln()
-        pdf.output(f"{datetime.datetime.now().strftime('%Y.%m.%d')} Ozon {shop} assemble list.pdf")
+        pdf.output(f"{datetime.datetime.now().strftime('%Y.%m.%d')} OZON {shop} assemble list.pdf")
 
 
 def main():
