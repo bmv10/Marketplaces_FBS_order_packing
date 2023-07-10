@@ -166,7 +166,7 @@ def make_assemble_list(shop, assembly_sheet):
             pdf.cell(70, 10, str(sku), 1)
             pdf.cell(20, 10, str(quantity), 1)
             pdf.ln()
-        pdf.output(f"{datetime.datetime.now().strftime('%Y.%m.%d')} OZON {shop} assemble list.pdf")
+        pdf.output(f"{datetime.datetime.now().strftime('%Y.%m.%d')} OZON {shop} Assemble list.pdf")
 
 
 def main():

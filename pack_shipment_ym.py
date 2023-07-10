@@ -22,60 +22,60 @@ def get_orders_to_shipment(shop, campaignId, warehouse_id):
               "supplierShipmentDateTo": datetime.datetime.now().strftime('%d-%m-%Y')
               }
     r = requests.get(url=f"{url}/orders", headers=headers, params=params)
-    print(r)
     load = r.json()
     pdfs = []
     assembly_sheet = []
-    for order in load.get("orders"):
-        orderID = order.get("id")
-        count = 0
-        for item in order.get("items"):
-            count += item.get("count")
+    if load.get("orders"):
+        for order in load.get("orders"):
+            orderID = order.get("id")
+            count = 0
+            for item in order.get("items"):
+                count += item.get("count")
 
-        # send count of shipment boxes for each order
-        json = {"boxes": [{} for _ in range(count)]}
-        requests.put(url=f"{url}/orders/{orderID}/delivery/shipments/1/boxes", headers=headers, json=json)
-        time.sleep(5)
+            # send count of shipment boxes for each order
+            json = {"boxes": [{} for _ in range(count)]}
+            requests.put(url=f"{url}/orders/{orderID}/delivery/shipments/1/boxes", headers=headers, json=json)
+            time.sleep(5)
 
-        # get labels in .pdf for each order
-        r = requests.get(url=f"{url}/orders/{orderID}/delivery/labels", headers=headers, params={"format":"A7"})
-        filename = f"{datetime.datetime.now().strftime('%Y.%m.%d')} YM {shop} labels_{orderID}.pdf"
-        pdfs.append(filename)
-        with open(filename, "wb") as f:
+            # get labels in .pdf for each order
+            r = requests.get(url=f"{url}/orders/{orderID}/delivery/labels", headers=headers, params={"format":"A7"})
+            filename = f"{datetime.datetime.now().strftime('%Y.%m.%d')} YM {shop} labels_{orderID}.pdf"
+            pdfs.append(filename)
+            with open(filename, "wb") as f:
+                f.write(r.content)
+
+            # set order status to "ready_to_ship"
+            r = requests.put(url=f"{url}/orders/{orderID}/status",
+                             headers=headers,
+                             json={"order": {
+                                 "status": "PROCESSING",
+                                 "substatus": "READY_TO_SHIP"
+                                    }
+                                }
+                             )
+            order_info = r.json()
+            print(order_info)
+            for item in order_info.get("order").get("items"):
+                assembly_sheet.append([orderID,
+                                       order_info.get("order").get("substatus"),
+                                       item.get("offerId"),
+                                       item.get("count")])
+        make_assembly_list(shop, assembly_sheet)
+
+        # get act for shipment
+        r = requests.get(url=f"{url}/shipments/reception-transfer-act", headers=headers, params={"warehouse_id": int(warehouse_id)})
+        with open(f"{datetime.datetime.now().strftime('%Y.%m.%d')} YM {shop} Act.pdf", "wb") as f:
             f.write(r.content)
 
-        # set order status to "ready_to_ship"
-        r = requests.put(url=f"{url}/orders/{orderID}/status",
-                         headers=headers,
-                         json={"order": {
-                             "status": "PROCESSING",
-                             "substatus": "READY_TO_SHIP"
-                                }
-                            }
-                         )
-        order_info = r.json()
-        print(order_info)
-        for item in order_info.get("order").get("items"):
-            assembly_sheet.append([orderID,
-                                   order_info.get("order").get("substatus"),
-                                   item.get("offerId"),
-                                   item.get("count")])
-    make_assembly_list(shop, assembly_sheet)
+        # merging labels pdf`s file if they more then 1 and remove raw files
 
-    # get act for shipment
-    r = requests.get(url=f"{url}/shipments/reception-transfer-act", headers=headers, params={"warehouse_id": int(warehouse_id)})
-    with open(f"{datetime.datetime.now().strftime('%Y.%m.%d')} YM {shop} Act.pdf", "wb") as f:
-        f.write(r.content)
-
-    # merging labels pdf`s file if they more then 1 and remove raw files
-
-    merger = PdfMerger()
-    for pdf in pdfs:
-        merger.append(pdf)
-    merger.write(f"{datetime.datetime.now().strftime('%Y.%m.%d')} YM {shop} labels.pdf")
-    merger.close()
-    for pdf in pdfs:
-        os.remove(pdf)
+        merger = PdfMerger()
+        for pdf in pdfs:
+            merger.append(pdf)
+        merger.write(f"{datetime.datetime.now().strftime('%Y.%m.%d')} YM {shop} labels.pdf")
+        merger.close()
+        for pdf in pdfs:
+            os.remove(pdf)
 
 
 def make_assembly_list(shop, assembly_sheet):
@@ -106,7 +106,7 @@ def make_assembly_list(shop, assembly_sheet):
         pdf.cell(90, 10, str(sku), 1)
         pdf.cell(20, 10, str(quantity), 1)
         pdf.ln()
-    pdf.output(f"{datetime.datetime.now().strftime('%Y.%m.%d')} YM {shop} assemble list.pdf")
+    pdf.output(f"{datetime.datetime.now().strftime('%Y.%m.%d')} YM {shop} Assemble list.pdf")
 
 
 def main():
