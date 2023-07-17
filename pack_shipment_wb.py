@@ -5,6 +5,7 @@ import img2pdf
 from fpdf import FPDF
 import os
 from dotenv import load_dotenv
+from distributer import send_mail, send_yadisk
 
 load_dotenv()
 tokens = eval(os.getenv("WB_TOKENS"))
@@ -54,9 +55,9 @@ def get_stikers_for_orders_in_shipment(shop, token, orders_list):
     for i in load:
         stikers_img.append(base64.urlsafe_b64decode(i.get("file")))
         stikers_info[i.get("orderId")] = f"{i.get('partA')} {i.get('partB')}"
-    with open(f"{datetime.datetime.now().strftime('%Y.%m.%d')} Wildberries {shop} Stickers.pdf", "wb") as f:
+    with open(labels_name := f"{datetime.datetime.now().strftime('%Y.%m.%d')} Wildberries {shop} Labels.pdf", "wb") as f:
         f.write(img2pdf.convert(stikers_img))
-    return stikers_info
+    return stikers_info, labels_name
 
 
 def set_shipment_to_supply(shipment, token):
@@ -76,8 +77,9 @@ def get_stiker_for_shipment(shop, token, shipment):
     load = req.json()
     print(load)
     stiker_img = base64.urlsafe_b64decode(load.get("file"))
-    with open(f"{datetime.datetime.now().strftime('%Y.%m.%d')} Wildberries {shop} shipment_list.pdf", "wb") as f:
+    with open(shipment_list_name := f"{datetime.datetime.now().strftime('%Y.%m.%d')} Wildberries {shop} shipment_list.pdf", "wb") as f:
         f.write(img2pdf.convert(stiker_img))
+    return shipment_list_name
 
 
 def get_assembly_sheet(shop, order_list):
@@ -106,10 +108,11 @@ def get_assembly_sheet(shop, order_list):
         pdf.cell(50, 10, str(order_label), 1)
         pdf.cell(110, 10, str(sku), 1)
         pdf.ln(10)
-    pdf.output(f"{datetime.datetime.now().strftime('%Y.%m.%d')} Wildberries {shop} assemble_list.pdf")
-
+    pdf.output(assemle_list_name := f"{datetime.datetime.now().strftime('%Y.%m.%d')} Wildberries {shop} assemble_list.pdf")
+    return assemle_list_name
 
 def main():
+    file_list_for_distributer = []
     for shop, token in tokens:
         orders = get_new_orders_to_pack_wb(token)
         order_tabs = []
@@ -119,13 +122,17 @@ def main():
             print(shipment_id)
             for order, article in orders.items():
                 add_order_to_shipment(token, shipment_id, order)
-            stikers_info = get_stikers_for_orders_in_shipment(shop, token, list(orders.keys()))
+            stikers_info, labels_name = get_stikers_for_orders_in_shipment(shop, token, list(orders.keys()))
+            file_list_for_distributer.append(labels_name)
             for order, article in orders.items():
                 order_tabs.append([order, stikers_info[order], article])
-            get_assembly_sheet(shop, order_tabs)
+            assemle_list_name = get_assembly_sheet(shop, order_tabs)
+            file_list_for_distributer.append(assemle_list_name)
             set_shipment_to_supply(shipment_id, token)
-            get_stiker_for_shipment(shop, token, shipment_id)
-
+            labels_name = get_stiker_for_shipment(shop, token, shipment_id)
+            file_list_for_distributer.append(labels_name)
+    send_mail(file_list_for_distributer)
+    send_yadisk(file_list_for_distributer)
 
 if __name__ == "__main__":
     main()

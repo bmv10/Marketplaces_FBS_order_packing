@@ -4,6 +4,7 @@ import time
 from fpdf import FPDF
 import os
 from dotenv import load_dotenv
+from distributer import send_mail, send_yadisk
 
 load_dotenv()
 tokens = eval(os.getenv("OZON_TOKENS"))
@@ -108,9 +109,9 @@ def get_package_label(taskID, shop, clientID, token):
             load = r.json()
     link = load.get("result").get("file_url")
     r = requests.get(link)
-    with open(f'{datetime.datetime.now().strftime("%Y.%m.%d")} OZON {shop} Labels.pdf', 'wb') as f:
+    with open(labels_name := f'{datetime.datetime.now().strftime("%Y.%m.%d")} OZON {shop} Labels.pdf', 'wb') as f:
         f.write(r.content)
-
+    return labels_name
 
 def create_act(delivery_method, clientID, token):
     url = "https://api-seller.ozon.ru/v2/posting/fbs/act/create"
@@ -133,9 +134,9 @@ def get_package_act(taskID_act, shop, clientID, token):
     r = requests.post(url, headers=headers, json=json)
     print(r)
     load = r.content
-    with open(f'{datetime.datetime.now().strftime("%Y.%m.%d")} OZON {shop} Act.pdf', 'wb') as f:
+    with open(act_name := f'{datetime.datetime.now().strftime("%Y.%m.%d")} OZON {shop} Act.pdf', 'wb') as f:
         f.write(load)
-
+    return act_name
 
 def make_assemble_list(shop, assembly_sheet):
     if assembly_sheet:
@@ -166,10 +167,12 @@ def make_assemble_list(shop, assembly_sheet):
             pdf.cell(70, 10, str(sku), 1)
             pdf.cell(20, 10, str(quantity), 1)
             pdf.ln()
-        pdf.output(f"{datetime.datetime.now().strftime('%Y.%m.%d')} OZON {shop} Assemble list.pdf")
+        pdf.output(assembly_list_name:=f"{datetime.datetime.now().strftime('%Y.%m.%d')} OZON {shop} Assemble list.pdf")
+        return assembly_list_name
 
 
 def main():
+    file_list_for_distributer = []
     for shop, clientID, token in tokens:
         get_orders_to_shipment(clientID, token, "awaiting_packaging")
         posting_numbers, delivery_method, assemble_list = get_orders_to_shipment(clientID, token, "awaiting_deliver")
@@ -178,11 +181,12 @@ def main():
             for delivery_method_id in set(delivery_method):
                 task_id_act = create_act(delivery_method_id, clientID, token)
                 time.sleep(120)
-                get_package_act(task_id_act, shop, clientID, token)
-            get_package_label(task_id_labels, shop, clientID, token)
+                file_list_for_distributer.append(get_package_act(task_id_act, shop, clientID, token))
+            file_list_for_distributer.append(get_package_label(task_id_labels, shop, clientID, token))
             print(shop, assemble_list)
-            make_assemble_list(shop, assemble_list)
-
+            file_list_for_distributer.append(make_assemble_list(shop, assemble_list))
+    send_mail(file_list_for_distributer)
+    send_yadisk(file_list_for_distributer)
 
 if __name__ == "__main__":
     main()

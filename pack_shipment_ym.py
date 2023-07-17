@@ -5,6 +5,7 @@ from pypdf import PdfMerger
 from fpdf import FPDF
 import os
 from dotenv import load_dotenv
+from distributer import send_mail, send_yadisk
 
 load_dotenv()
 campaign_id = eval(os.getenv("YM_CAMPAIGN_ID"))
@@ -38,8 +39,8 @@ def get_orders_to_shipment(shop, campaignId, warehouse_id):
             time.sleep(5)
 
             # get labels in .pdf for each order
-            r = requests.get(url=f"{url}/orders/{orderID}/delivery/labels", headers=headers, params={"format":"A7"})
-            filename = f"{datetime.datetime.now().strftime('%Y.%m.%d')} YM {shop} labels_{orderID}.pdf"
+            r = requests.get(url=f"{url}/orders/{orderID}/delivery/labels", headers=headers, params={"format": "A7"})
+            filename = f"{datetime.datetime.now().strftime('%Y.%m.%d')} Yandex_Market {shop} labels_{orderID}.pdf"
             pdfs.append(filename)
             with open(filename, "wb") as f:
                 f.write(r.content)
@@ -47,11 +48,7 @@ def get_orders_to_shipment(shop, campaignId, warehouse_id):
             # set order status to "ready_to_ship"
             r = requests.put(url=f"{url}/orders/{orderID}/status",
                              headers=headers,
-                             json={"order": {
-                                 "status": "PROCESSING",
-                                 "substatus": "READY_TO_SHIP"
-                                    }
-                                }
+                             json={"order": {"status": "PROCESSING", "substatus": "READY_TO_SHIP"}}
                              )
             order_info = r.json()
             print(order_info)
@@ -60,11 +57,12 @@ def get_orders_to_shipment(shop, campaignId, warehouse_id):
                                        order_info.get("order").get("substatus"),
                                        item.get("offerId"),
                                        item.get("count")])
-        make_assembly_list(shop, assembly_sheet)
+        assembly_list_name = make_assembly_list(shop, assembly_sheet)
 
         # get act for shipment
-        r = requests.get(url=f"{url}/shipments/reception-transfer-act", headers=headers, params={"warehouse_id": int(warehouse_id)})
-        with open(f"{datetime.datetime.now().strftime('%Y.%m.%d')} YM {shop} Act.pdf", "wb") as f:
+        r = requests.get(url=f"{url}/shipments/reception-transfer-act", headers=headers,
+                         params={"warehouse_id": int(warehouse_id)})
+        with open(act_name := f"{datetime.datetime.now().strftime('%Y.%m.%d')} Yandex_Market {shop} Act.pdf", "wb") as f:
             f.write(r.content)
 
         # merging labels pdf`s file if they more then 1 and remove raw files
@@ -72,14 +70,17 @@ def get_orders_to_shipment(shop, campaignId, warehouse_id):
         merger = PdfMerger()
         for pdf in pdfs:
             merger.append(pdf)
-        merger.write(f"{datetime.datetime.now().strftime('%Y.%m.%d')} YM {shop} labels.pdf")
+        merger.write(labels_name := f"{datetime.datetime.now().strftime('%Y.%m.%d')} Yandex_Market {shop} labels.pdf")
         merger.close()
         for pdf in pdfs:
             os.remove(pdf)
 
+        return assembly_list_name, act_name, labels_name
+
 
 def make_assembly_list(shop, assembly_sheet):
     assembly_sheet = [["Order number", "Order status", "SKU", "Quantity"]]+assembly_sheet
+    file_name = f"{datetime.datetime.now().strftime('%Y.%m.%d')} Yandex_Market {shop} Assemble list.pdf"
 
     class PDF(FPDF):
         def header(self):
@@ -106,12 +107,18 @@ def make_assembly_list(shop, assembly_sheet):
         pdf.cell(90, 10, str(sku), 1)
         pdf.cell(20, 10, str(quantity), 1)
         pdf.ln()
-    pdf.output(f"{datetime.datetime.now().strftime('%Y.%m.%d')} YM {shop} Assemble list.pdf")
+    pdf.output(file_name)
+    return file_name
 
 
 def main():
+    file_list_for_distributer = []
     for shop, campaignId, warehouse_id in campaign_id:
-        get_orders_to_shipment(shop, campaignId, warehouse_id)
+        files = get_orders_to_shipment(shop, campaignId, warehouse_id)
+        if files:
+            file_list_for_distributer.extend(files)
+    send_mail(file_list_for_distributer)
+    send_yadisk(file_list_for_distributer)
 
 
 if __name__ == "__main__":
