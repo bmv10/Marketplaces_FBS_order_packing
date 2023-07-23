@@ -77,7 +77,7 @@ def get_stiker_for_shipment(shop, token, shipment):
     load = req.json()
     print(load)
     stiker_img = base64.urlsafe_b64decode(load.get("file"))
-    with open(shipment_list_name := f"{datetime.datetime.now().strftime('%Y.%m.%d')} Wildberries {shop} shipment_list.pdf", "wb") as f:
+    with open(shipment_list_name := f"{datetime.datetime.now().strftime('%Y.%m.%d')} Wildberries {shop} Shipment_list.pdf", "wb") as f:
         f.write(img2pdf.convert(stiker_img))
     return shipment_list_name
 
@@ -108,7 +108,7 @@ def get_assembly_sheet(shop, order_list):
         pdf.cell(50, 10, str(order_label), 1)
         pdf.cell(110, 10, str(sku), 1)
         pdf.ln(10)
-    pdf.output(assemle_list_name := f"{datetime.datetime.now().strftime('%Y.%m.%d')} Wildberries {shop} assemble_list.pdf")
+    pdf.output(assemle_list_name := f"{datetime.datetime.now().strftime('%Y.%m.%d')} Wildberries {shop} Assemble_list.pdf")
     return assemle_list_name
 
 def main():
