@@ -66,6 +66,7 @@ def send_yadisk(file_list=None):
             for file in file_list:
                 result = y.upload(file, f"{month_}/{file}")
                 print(f"Uploaded file: {result.path}")
+                os.remove(file)
         else:
             print("YaDisk function: There is no one file to send")
     else:
