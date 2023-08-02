@@ -5,6 +5,7 @@ from fpdf import FPDF
 import os
 from dotenv import load_dotenv
 from distributer import send_mail, send_yadisk
+# from utils import make_assemble_list_xls
 
 load_dotenv()
 tokens = eval(os.getenv("OZON_TOKENS"))
@@ -12,12 +13,13 @@ tokens = eval(os.getenv("OZON_TOKENS"))
 
 def get_orders_to_shipment(clientID, token, status):
     url = "https://api-seller.ozon.ru/v3/posting/fbs/unfulfilled/list"
-    date_ship = datetime.datetime.now().strftime("%Y-%m-%d")
+    date_ship_to = datetime.datetime.now().strftime("%Y-%m-%d")
+    date_ship_from = (datetime.datetime.now() - datetime.timedelta(days=7)).strftime("%Y-%m-%d")
     headers = {"Client-Id": clientID, "Api-Key": token, "Content-Type": "application/json"}
     json = {"dir": "ASC",
             "filter": {
-                "cutoff_from": f"{date_ship}T00:01:00Z",
-                "cutoff_to": f"{date_ship}T23:59:00Z",
+                "cutoff_from": f"{date_ship_from}T00:01:00Z",
+                "cutoff_to": f"{date_ship_to}T23:59:00Z",
                 "delivery_method_id": [],
                 "provider_id": [],
                 "status": status,
@@ -36,6 +38,8 @@ def get_orders_to_shipment(clientID, token, status):
     print(r)
     load = r.json()
     print(load)
+    for posting in load.get("result").get("postings"):
+        print(posting)
     posting_numbers = []
     delivery_method = []
     assemble_list = []
@@ -188,5 +192,6 @@ def main():
     send_mail(file_list_for_distributer)
     send_yadisk(file_list_for_distributer)
 
-if __name__ == "__main__":
-    main()
+
+# if __name__ == "__main__":
+#     main()
