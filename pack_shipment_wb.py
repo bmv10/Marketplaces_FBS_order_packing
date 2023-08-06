@@ -6,6 +6,7 @@ from fpdf import FPDF
 import os
 from dotenv import load_dotenv
 from distributer import send_mail, send_yadisk
+from utils import make_assemble_list_xls
 
 load_dotenv()
 tokens = eval(os.getenv("WB_TOKENS"))
@@ -126,7 +127,7 @@ def main():
             file_list_for_distributer.append(labels_name)
             for order, article in orders.items():
                 order_tabs.append([order, stikers_info[order], article])
-            assemle_list_name = get_assembly_sheet(shop, order_tabs)
+            assemle_list_name = make_assemble_list_xls("Wildberries", shop, order_tabs)
             file_list_for_distributer.append(assemle_list_name)
             set_shipment_to_supply(shipment_id, token)
             labels_name = get_stiker_for_shipment(shop, token, shipment_id)

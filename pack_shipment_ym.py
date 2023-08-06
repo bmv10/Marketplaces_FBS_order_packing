@@ -6,6 +6,7 @@ from fpdf import FPDF
 import os
 from dotenv import load_dotenv
 from distributer import send_mail, send_yadisk
+from utils import make_assemble_list_xls
 
 load_dotenv()
 campaign_id = eval(os.getenv("YM_CAMPAIGN_ID"))
@@ -57,7 +58,7 @@ def get_orders_to_shipment(shop, campaignId, warehouse_id):
                                        order_info.get("order").get("substatus"),
                                        item.get("offerId"),
                                        item.get("count")])
-        assembly_list_name = make_assembly_list(shop, assembly_sheet)
+        assembly_list_name = make_assemble_list_xls("Yandex Market", shop, assembly_sheet)
 
         # get act for shipment
         r = requests.get(url=f"{url}/shipments/reception-transfer-act", headers=headers,

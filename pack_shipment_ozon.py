@@ -5,7 +5,7 @@ from fpdf import FPDF
 import os
 from dotenv import load_dotenv
 from distributer import send_mail, send_yadisk
-# from utils import make_assemble_list_xls
+from utils import make_assemble_list_xls
 
 load_dotenv()
 tokens = eval(os.getenv("OZON_TOKENS"))
@@ -188,10 +188,10 @@ def main():
                 file_list_for_distributer.append(get_package_act(task_id_act, shop, clientID, token))
             file_list_for_distributer.append(get_package_label(task_id_labels, shop, clientID, token))
             print(shop, assemble_list)
-            file_list_for_distributer.append(make_assemble_list(shop, assemble_list))
+            file_list_for_distributer.append(make_assemble_list_xls("OZON" ,shop, assemble_list))
     send_mail(file_list_for_distributer)
     send_yadisk(file_list_for_distributer)
 
 
-# if __name__ == "__main__":
-#     main()
+if __name__ == "__main__":
+    main()
