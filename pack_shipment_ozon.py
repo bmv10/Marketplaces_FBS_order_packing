@@ -37,7 +37,7 @@ def get_orders_to_shipment(clientID, token, status):
     r = requests.post(url, headers=headers, json=json)
     print(r)
     load = r.json()
-    print(load)
+    # print(load)
     for posting in load.get("result").get("postings"):
         print(posting)
     posting_numbers = []
@@ -129,6 +129,16 @@ def create_act(delivery_method, clientID, token):
     load = r.json()
     return load.get("result").get("id")
 
+def check_act(taskID_act, clientID, token):
+    url = "https://api-seller.ozon.ru/v2/posting/fbs/digital/act/check-status"
+    headers = {"Client-Id": clientID, "Api-Key": token, "Content-Type": "application/json"}
+    json = {"id": taskID_act}
+    r = requests.post(url, headers=headers, json=json)
+    while r.json().get("status") not in ["FORMED", "CONFIRMED", "CONFIRMED_WITH_MISMATCH"]:
+        time.sleep(20)
+        check_act(taskID_act, clientID, token)
+    return r.json().get("status")
+
 
 def get_package_act(taskID_act, shop, clientID, token):
     url = "https://api-seller.ozon.ru/v2/posting/fbs/digital/act/get-pdf"
@@ -184,7 +194,7 @@ def main():
             task_id_labels = create_package_label(posting_numbers, clientID, token)
             for delivery_method_id in set(delivery_method):
                 task_id_act = create_act(delivery_method_id, clientID, token)
-                time.sleep(120)
+                check_act(task_id_act, clientID, token)
                 file_list_for_distributer.append(get_package_act(task_id_act, shop, clientID, token))
             file_list_for_distributer.append(get_package_label(task_id_labels, shop, clientID, token))
             print(shop, assemble_list)
@@ -195,3 +205,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+

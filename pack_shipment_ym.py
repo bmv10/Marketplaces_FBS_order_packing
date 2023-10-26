@@ -67,7 +67,7 @@ def get_orders_to_shipment(shop, campaignId, warehouse_id):
             f.write(r.content)
 
         # merging labels pdf`s file if they more then 1 and remove raw files
-
+        # print(pdfs)
         merger = PdfMerger()
         for pdf in pdfs:
             merger.append(pdf)
@@ -124,3 +124,12 @@ def main():
 
 if __name__ == "__main__":
     main()
+# pdfs = ["", "", ""]
+#
+# merger = PdfMerger()
+# for pdf in pdfs:
+#     merger.append(pdf)
+# merger.write(labels_name := f"{datetime.datetime.now().strftime('%Y.%m.%d')} Yandex_Market 111 Labels.pdf")
+# merger.close()
+# for pdf in pdfs:
+#     os.remove(pdf)
