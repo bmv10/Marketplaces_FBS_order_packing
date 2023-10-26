@@ -67,7 +67,7 @@ def get_orders_to_shipment(shop, campaignId, warehouse_id):
             f.write(r.content)
 
         # merging labels pdf`s file if they more then 1 and remove raw files
-        # print(pdfs)
+        print(pdfs)
         merger = PdfMerger()
         for pdf in pdfs:
             merger.append(pdf)
