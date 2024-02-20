@@ -80,7 +80,7 @@ def set_awaiting_deliver_for_order(order, clientID, token):
                 ]
             }
             )
-    url = "https://api-seller.ozon.ru/v3/posting/fbs/ship"
+    url = "https://api-seller.ozon.ru/v4/posting/fbs/ship"
     headers = {"Client-Id": clientID, "Api-Key": token, "Content-Type": "application/json"}
     r = requests.post(url, headers=headers, json=json)
     print(r)
