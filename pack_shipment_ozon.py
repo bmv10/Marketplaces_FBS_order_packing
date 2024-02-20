@@ -47,6 +47,7 @@ def get_orders_to_shipment(clientID, token, status):
         if i:
             if status == "awaiting_packaging":
                 set_awaiting_deliver_for_order(i, clientID, token)
+                time.sleep(3)
             else:
                 assemble_list.append([i.get("posting_number"), i.get("status"), i.get("products")[0].get("offer_id"),
                                       i.get("products")[0].get("quantity")])
